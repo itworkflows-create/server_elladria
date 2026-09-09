@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ArrowUpRight,
   Leaf,
+  HardDrive,
 } from "lucide-react";
 import { useApp } from "../context";
 import { Avatar, Badge } from "./common";
@@ -57,6 +58,7 @@ export function Layout() {
       ? [
           { path: "/users", label: "Users", icon: Users },
           { path: "/permissions", label: "Permissions", icon: ShieldCheck },
+          { path: "/storage", label: "Storage", icon: HardDrive },
         ]
       : []),
     ...(user.role !== "Department Member"
@@ -70,6 +72,7 @@ export function Layout() {
       { path: "/settings", label: "Settings" },
       { path: "/upload", label: "Upload file" },
       { path: "/search", label: "Search" },
+      { path: "/storage", label: "Storage overview" },
     ].find((n) => n.path === location.pathname)?.label ?? "Workspace";
   return (
     <div className="app-shell">

@@ -21,6 +21,7 @@ import {
 import { Button } from "../components/ui/button";
 import { Modal } from "../components/ui/dialog";
 import { CreateResource } from "../components/create-resource";
+import { DepartmentStorage } from "../components/storage/department-storage";
 export function Departments({
   mode = "all",
 }: {
@@ -194,6 +195,7 @@ export function DepartmentDetails({ departmentId }: { departmentId?: string }) {
         <Badge tone="gray">{spaces.length} storage spaces</Badge>
         <Badge tone="gray">{dept.members} team members</Badge>
       </div>
+      <DepartmentStorage key={dept.id} departmentId={dept.id} />
       <div className="section-heading">
         <div>
           <h2>Storage spaces</h2>

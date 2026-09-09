@@ -9,6 +9,11 @@ import { canManage } from "../lib/access";
 import { Empty, PageHeading, sizeLabel } from "../components/common";
 import { Button } from "../components/ui/button";
 import type { DocumentFile } from "../types";
+import {
+  formatFileSize,
+  getDepartmentStorage,
+  getUploadStorageError,
+} from "../lib/storage";
 const schema = z.object({
   spaceId: z.string().min(1, "Choose a storage space."),
   description: z.string().max(500, "Use 500 characters or fewer."),
@@ -25,6 +30,7 @@ export function UploadFile() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -35,6 +41,14 @@ export function UploadFile() {
       description: "",
     },
   });
+  const selectedSpace = spaces.find((s) => s.id === watch("spaceId"));
+  const storage = selectedSpace
+    ? getDepartmentStorage(db, selectedSpace.departmentId)
+    : null;
+  const quotaError =
+    file && selectedSpace
+      ? getUploadStorageError(db, selectedSpace.departmentId, file.size)
+      : null;
   function choose(next?: File) {
     setError("");
     setFile(null);
@@ -50,6 +64,17 @@ export function UploadFile() {
     if (next.size === 0) {
       setError("This file is empty. Choose another file.");
       return;
+    }
+    if (selectedSpace) {
+      const message = getUploadStorageError(
+        db,
+        selectedSpace.departmentId,
+        next.size,
+      );
+      if (message) {
+        setError(message);
+        return;
+      }
     }
     setFile(next);
   }
@@ -87,6 +112,20 @@ export function UploadFile() {
               setError("Choose a file to upload.");
               return;
             }
+            const targetSpace = spaces.find((s) => s.id === values.spaceId);
+            if (!targetSpace) {
+              setError("Choose a storage space.");
+              return;
+            }
+            const message = getUploadStorageError(
+              db,
+              targetSpace.departmentId,
+              file.size,
+            );
+            if (message) {
+              setError(message);
+              return;
+            }
             setReading(true);
             try {
               const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -107,7 +146,7 @@ export function UploadFile() {
                     spaceId: values.spaceId,
                     name: file.name,
                     type,
-                    size: file.size,
+                    fileSizeBytes: file.size,
                     dataUrl,
                     content: values.description,
                   },
@@ -142,6 +181,15 @@ export function UploadFile() {
               <span className="error">{errors.spaceId.message}</span>
             )}
           </label>
+          {storage && (
+            <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+              {storage.department.name}:{" "}
+              <strong>
+                {formatFileSize(storage.remainingBytes)} available
+              </strong>{" "}
+              of {formatFileSize(storage.capacityBytes)} quota.
+            </p>
+          )}
           <label
             className="drop-zone"
             onDragOver={(e) => e.preventDefault()}
@@ -170,9 +218,9 @@ export function UploadFile() {
               {file ? "Choose a different file" : "Browse files"}
             </span>
           </label>
-          {error && (
+          {(quotaError || error) && (
             <p role="alert" className="error">
-              {error}
+              {quotaError || error}
             </p>
           )}
           <label>
@@ -195,7 +243,7 @@ export function UploadFile() {
             >
               Cancel
             </Button>
-            <Button disabled={pending || reading} type="submit">
+            <Button disabled={pending || reading || !!quotaError} type="submit">
               <CloudUpload size={17} />
               {pending || reading ? "Uploading…" : "Upload file"}
             </Button>

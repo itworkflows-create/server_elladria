@@ -19,10 +19,8 @@ import { canManage, fileDepartment } from "../lib/access";
 import type { Department, DocumentFile, Space } from "../types";
 import { Button } from "./ui/button";
 import { Modal } from "./ui/dialog";
-export const sizeLabel = (bytes: number) =>
-  bytes >= 1000000
-    ? `${(bytes / 1000000).toFixed(1)} MB`
-    : `${(bytes / 1000).toFixed(0)} KB`;
+import { formatFileSize, sumFileSizes } from "../lib/storage";
+export const sizeLabel = formatFileSize;
 export const dateLabel = (date: string) =>
   new Date(date).toLocaleDateString("en-US", {
     month: "short",
@@ -138,7 +136,7 @@ export function SpaceCard({ space }: { space: Space }) {
       <p>{space.description}</p>
       <div className="card-meta">
         <span>{files.length} files</span>
-        <span>{sizeLabel(files.reduce((n, f) => n + f.size, 0))}</span>
+        <span>{sizeLabel(sumFileSizes(files))}</span>
       </div>
     </Link>
   );
@@ -281,7 +279,7 @@ export function FileTable({
                     </td>
                     <td>{dateLabel(file.date)}</td>
                     <td className="whitespace-nowrap">
-                      {sizeLabel(file.size)}
+                      {sizeLabel(file.fileSizeBytes)}
                     </td>
                     <td>
                       <div className="flex">

@@ -1,5 +1,10 @@
 import type { Database } from "../types";
+import {
+  getMockDepartmentQuota,
+  mockStorageConfiguration,
+} from "./mock-storage";
 export const seed: Database = {
+  storage: { ...mockStorageConfiguration },
   users: [
     {
       id: "u1",
@@ -64,6 +69,7 @@ export const seed: Database = {
       description: "Brand assets, creative work, and design systems.",
       color: "purple",
       members: 8,
+      storageQuotaBytes: getMockDepartmentQuota("design"),
     },
     {
       id: "finance",
@@ -71,6 +77,7 @@ export const seed: Database = {
       description: "Budgets, financial reports, and accounting.",
       color: "green",
       members: 6,
+      storageQuotaBytes: getMockDepartmentQuota("finance"),
     },
     {
       id: "engineering",
@@ -78,6 +85,7 @@ export const seed: Database = {
       description: "Technical documentation and product resources.",
       color: "blue",
       members: 14,
+      storageQuotaBytes: getMockDepartmentQuota("engineering"),
     },
     {
       id: "people",
@@ -85,6 +93,7 @@ export const seed: Database = {
       description: "Employee resources, policies, and onboarding.",
       color: "orange",
       members: 5,
+      storageQuotaBytes: getMockDepartmentQuota("people"),
     },
     {
       id: "marketing",
@@ -92,6 +101,7 @@ export const seed: Database = {
       description: "Campaigns, content, and market insights.",
       color: "pink",
       members: 9,
+      storageQuotaBytes: getMockDepartmentQuota("marketing"),
     },
     {
       id: "operations",
@@ -99,6 +109,7 @@ export const seed: Database = {
       description: "Processes, planning, and business operations.",
       color: "teal",
       members: 7,
+      storageQuotaBytes: getMockDepartmentQuota("operations"),
     },
   ],
   spaces: [
@@ -157,7 +168,7 @@ export const seed: Database = {
       spaceId: "s1",
       name: "Brand guidelines 2026.pdf",
       type: "PDF",
-      size: 4200000,
+      fileSizeBytes: 4200000,
       uploadedBy: "u3",
       date: "2026-09-09T08:30:00Z",
       content:
@@ -168,7 +179,7 @@ export const seed: Database = {
       spaceId: "s3",
       name: "Q3 financial overview.xlsx",
       type: "XLSX",
-      size: 1800000,
+      fileSizeBytes: 1800000,
       uploadedBy: "u4",
       date: "2026-09-09T07:15:00Z",
       content:
@@ -179,7 +190,7 @@ export const seed: Database = {
       spaceId: "s5",
       name: "Employee handbook.docx",
       type: "DOCX",
-      size: 2400000,
+      fileSizeBytes: 2400000,
       uploadedBy: "u6",
       date: "2026-09-08T15:10:00Z",
       content:
@@ -190,7 +201,7 @@ export const seed: Database = {
       spaceId: "s4",
       name: "API architecture v2.pdf",
       type: "PDF",
-      size: 6700000,
+      fileSizeBytes: 6700000,
       uploadedBy: "u5",
       date: "2026-09-08T13:40:00Z",
       content:
@@ -201,7 +212,7 @@ export const seed: Database = {
       spaceId: "s6",
       name: "Autumn campaign brief.pdf",
       type: "PDF",
-      size: 3100000,
+      fileSizeBytes: 3100000,
       uploadedBy: "u1",
       date: "2026-09-08T10:00:00Z",
       content:
@@ -212,7 +223,7 @@ export const seed: Database = {
       spaceId: "s7",
       name: "Operations roadmap.docx",
       type: "DOCX",
-      size: 980000,
+      fileSizeBytes: 980000,
       uploadedBy: "u1",
       date: "2026-09-07T11:00:00Z",
       content:
@@ -223,7 +234,7 @@ export const seed: Database = {
       spaceId: "s2",
       name: "Research synthesis.pdf",
       type: "PDF",
-      size: 2300000,
+      fileSizeBytes: 2300000,
       uploadedBy: "u3",
       date: "2026-09-06T09:00:00Z",
       content:
@@ -234,7 +245,7 @@ export const seed: Database = {
       spaceId: "s8",
       name: "Supplier evaluation.xlsx",
       type: "XLSX",
-      size: 560000,
+      fileSizeBytes: 560000,
       uploadedBy: "u1",
       date: "2026-09-05T09:00:00Z",
       content:

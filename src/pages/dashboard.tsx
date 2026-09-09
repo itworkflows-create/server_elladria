@@ -21,6 +21,12 @@ import {
   sizeLabel,
 } from "../components/common";
 import { Button } from "../components/ui/button";
+import {
+  calculateStorageUsage,
+  getDepartmentStorage,
+  getSystemStorage,
+} from "../lib/storage";
+import { StorageMeter } from "../components/storage/storage-meter";
 export function Dashboard() {
   const { db } = useApp();
   const user = useUser();
@@ -29,7 +35,13 @@ export function Dashboard() {
   const files = db.files.filter((f) =>
     canView(user, fileDepartment(db, f.spaceId), db),
   );
-  const bytes = files.reduce((n, f) => n + f.size, 0);
+  const storage =
+    user.role !== "Department Member"
+      ? getSystemStorage(db)
+      : user.departmentId
+        ? getDepartmentStorage(db, user.departmentId)
+        : calculateStorageUsage([], 0);
+  const bytes = storage.usedBytes;
   const activities = db.activities
     .filter(
       (a) =>
@@ -119,7 +131,10 @@ export function Dashboard() {
           {
             label: "Storage used",
             value: sizeLabel(bytes),
-            note: "Of 5 GB demo capacity",
+            note:
+              user.role === "Department Member"
+                ? `Of ${sizeLabel(storage.capacityBytes)} department quota`
+                : `Of ${sizeLabel(storage.capacityBytes)} system capacity`,
             icon: HardDrive,
             color: "blue",
           },
@@ -134,12 +149,8 @@ export function Dashboard() {
             <strong>{value}</strong>
             <small>{note}</small>
             {label === "Storage used" && (
-              <div className="progress-track">
-                <div
-                  style={{
-                    width: `${Math.max(1, (bytes / 5000000000) * 100)}%`,
-                  }}
-                />
+              <div className="mt-3">
+                <StorageMeter usage={storage} label="Dashboard storage usage" />
               </div>
             )}
           </div>
@@ -241,18 +252,25 @@ export function Dashboard() {
           </span>
           <h2>Room for your next big idea.</h2>
           <p>
-            Your accessible files use {sizeLabel(bytes)} of the 5 GB demo
-            capacity.
+            {user.role === "Department Member"
+              ? "Your department uses"
+              : "Your workspace uses"}{" "}
+            {sizeLabel(bytes)} of {sizeLabel(storage.capacityBytes)}.{" "}
+            {sizeLabel(storage.remainingBytes)} remains available.
           </p>
-          <div className="progress-track">
-            <div
-              style={{ width: `${Math.max(1, (bytes / 5000000000) * 100)}%` }}
-            />
-          </div>
+          <StorageMeter usage={storage} label="Workspace storage usage" />
           <div className="flex justify-between text-xs text-slate-500">
             <span>{sizeLabel(bytes)} used</span>
-            <span>5 GB capacity</span>
+            <span>{sizeLabel(storage.capacityBytes)} capacity</span>
           </div>
+          {user.role !== "Department Member" && (
+            <Button variant="outline" asChild className="mt-5 mr-2">
+              <Link to="/storage">
+                <HardDrive size={15} />
+                View storage usage
+              </Link>
+            </Button>
+          )}
           {user.role !== "Executive" && (
             <Button variant="outline" asChild className="mt-5">
               <Link to="/upload">

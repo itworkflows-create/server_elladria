@@ -13,6 +13,7 @@ export interface Department {
   description: string;
   color: string;
   members: number;
+  storageQuotaBytes: number;
 }
 export interface Space {
   id: string;
@@ -25,7 +26,7 @@ export interface DocumentFile {
   spaceId: string;
   name: string;
   type: "PDF" | "DOCX" | "XLSX" | "PNG";
-  size: number;
+  fileSizeBytes: number;
   uploadedBy: string;
   date: string;
   content: string;
@@ -46,6 +47,7 @@ export interface Activity {
   date: string;
 }
 export interface Database {
+  storage: import("./types/storage").StorageConfiguration;
   users: User[];
   departments: Department[];
   spaces: Space[];

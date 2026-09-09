@@ -1,5 +1,10 @@
 import { seed } from "./seed";
 import { canAdmin, canManage } from "../lib/access";
+import {
+  DEFAULT_DEPARTMENT_QUOTA_BYTES,
+  migrateStorageData,
+} from "./mock-storage";
+import { formatFileSize, getUploadStorageError } from "../lib/storage";
 import type { Database, DocumentFile, Permission, Role, User } from "../types";
 const KEY = "elladria-demo-v1";
 function read(): Database {
@@ -15,7 +20,7 @@ function read(): Database {
         parsed.permissions &&
         parsed.activities
       )
-        return parsed;
+        return migrateStorageData(parsed);
     }
   } catch {
     /* Start fresh if browser data is unavailable. */
@@ -24,6 +29,7 @@ function read(): Database {
 }
 let database = read();
 export type Command =
+  | { kind: "quota"; departmentId: string; storageQuotaBytes: number }
   | { kind: "department"; name: string; description: string }
   | { kind: "space"; name: string; description: string; departmentId: string }
   | { kind: "upload"; file: Omit<DocumentFile, "id" | "date" | "uploadedBy"> }
@@ -73,6 +79,22 @@ export const repository: Repository = {
     let target = "";
     let departmentId: string | undefined;
     switch (command.kind) {
+      case "quota": {
+        requireAdmin();
+        const department = db.departments.find(
+          (d) => d.id === command.departmentId,
+        );
+        if (!department) throw new Error("Department not found.");
+        if (
+          !Number.isSafeInteger(command.storageQuotaBytes) ||
+          command.storageQuotaBytes <= 0
+        )
+          throw new Error("Quota must be a positive whole number of bytes.");
+        target = `${department.name}: ${formatFileSize(department.storageQuotaBytes)} → ${formatFileSize(command.storageQuotaBytes)}`;
+        department.storageQuotaBytes = command.storageQuotaBytes;
+        departmentId = department.id;
+        break;
+      }
       case "department": {
         if (
           user.role === "Executive" ||
@@ -88,6 +110,7 @@ export const repository: Repository = {
           description: command.description,
           color: "teal",
           members: 1,
+          storageQuotaBytes: DEFAULT_DEPARTMENT_QUOTA_BYTES,
         });
         if (user.role === "Department Member") user.departmentId = id;
         target = command.name;
@@ -109,6 +132,12 @@ export const repository: Repository = {
         const space = db.spaces.find((s) => s.id === command.file.spaceId);
         if (!space) throw new Error("Select a storage space.");
         requireManage(space.departmentId);
+        const quotaError = getUploadStorageError(
+          db,
+          space.departmentId,
+          command.file.fileSizeBytes,
+        );
+        if (quotaError) throw new Error(quotaError);
         db.files.unshift({
           ...command.file,
           id: crypto.randomUUID(),
@@ -254,6 +283,7 @@ export const repository: Repository = {
       id: crypto.randomUUID(),
       userId: user.id,
       action: {
+        quota: "changed storage quota",
         department: "created department",
         space: "created storage space",
         upload: "uploaded",

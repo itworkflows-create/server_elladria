@@ -14,6 +14,9 @@ import { SettingsPage } from "./pages/settings";
 import { Empty } from "./components/common";
 import type { Role } from "./types";
 import "./index.css";
+const StoragePage = React.lazy(() =>
+  import("./pages/storage").then((module) => ({ default: module.StoragePage })),
+);
 const client = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 30000, retry: 1, refetchOnWindowFocus: false },
@@ -63,6 +66,24 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 }
               />
               <Route path="search" element={<SearchFiles />} />
+              <Route
+                path="storage"
+                element={
+                  <Guard roles={["Admin", "Executive"]}>
+                    <React.Suspense
+                      fallback={
+                        <div
+                          role="status"
+                          aria-label="Loading storage overview"
+                          className="skeleton h-64"
+                        />
+                      }
+                    >
+                      <StoragePage />
+                    </React.Suspense>
+                  </Guard>
+                }
+              />
               <Route
                 path="users"
                 element={
