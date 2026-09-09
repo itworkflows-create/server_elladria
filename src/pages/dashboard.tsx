@@ -16,10 +16,10 @@ import {
   Avatar,
   DepartmentCard,
   Empty,
-  FileTable,
   PageHeading,
   sizeLabel,
 } from "../components/common";
+import { FileTable } from "../components/files/file-table";
 import { Button } from "../components/ui/button";
 import {
   calculateStorageUsage,

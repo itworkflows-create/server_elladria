@@ -8,7 +8,8 @@ import { useApp, useUser } from "../context";
 import { canManage } from "../lib/access";
 import { Empty, PageHeading, sizeLabel } from "../components/common";
 import { Button } from "../components/ui/button";
-import type { DocumentFile } from "../types";
+import { FILE_ACCEPT, validateUploadFile } from "../lib/file-types";
+import { fileService } from "../lib/file-service";
 import {
   formatFileSize,
   getDepartmentStorage,
@@ -53,16 +54,9 @@ export function UploadFile() {
     setError("");
     setFile(null);
     if (!next) return;
-    if (!/\.(pdf|docx|xlsx|png)$/i.test(next.name)) {
-      setError("Choose a PDF, DOCX, XLSX, or PNG file.");
-      return;
-    }
-    if (next.size > 2000000) {
-      setError("Choose a file smaller than 2 MB for this local demo.");
-      return;
-    }
-    if (next.size === 0) {
-      setError("This file is empty. Choose another file.");
+    const validationError = validateUploadFile(next);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     if (selectedSpace) {
@@ -128,33 +122,24 @@ export function UploadFile() {
             }
             setReading(true);
             try {
-              const dataUrl = await new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(String(reader.result));
-                reader.onerror = () =>
-                  reject(new Error("Unable to read this file."));
-                reader.readAsDataURL(file);
-              });
-              const type = file.name
-                .split(".")
-                .pop()!
-                .toUpperCase() as DocumentFile["type"];
+              const uploaded = await fileService.upload(file);
               if (
                 await run({
                   kind: "upload",
                   file: {
                     spaceId: values.spaceId,
-                    name: file.name,
-                    type,
-                    fileSizeBytes: file.size,
-                    dataUrl,
+                    ...uploaded,
                     content: values.description,
                   },
                 })
               )
                 navigate(`/storage/${values.spaceId}`);
-            } catch {
-              setError("Unable to read this file. Please try again.");
+            } catch (error) {
+              setError(
+                error instanceof Error
+                  ? error.message
+                  : "Unable to read this file. Please try again.",
+              );
             } finally {
               setReading(false);
             }
@@ -168,7 +153,10 @@ export function UploadFile() {
           </div>
           <label>
             Storage space
-            <select {...register("spaceId")}>
+            <select
+              {...register("spaceId", { onChange: () => setError("") })}
+              disabled={reading || pending}
+            >
               <option value="">Choose a storage space</option>
               {spaces.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -205,13 +193,14 @@ export function UploadFile() {
             <span>
               {file
                 ? sizeLabel(file.size)
-                : "PDF, DOCX, XLSX, or PNG · Up to 2 MB per file"}
+                : "Documents, images, audio, or video · Up to 2 MB per file"}
             </span>
             <input
               className="sr-only"
               aria-label="Choose file"
               type="file"
-              accept=".pdf,.docx,.xlsx,.png"
+              accept={FILE_ACCEPT}
+              disabled={reading || pending}
               onChange={(e) => choose(e.target.files?.[0])}
             />
             <span className="browse-label">
@@ -255,6 +244,23 @@ export function UploadFile() {
           <p>
             Files inherit their department's permissions. Your team and people
             with granted access can find them here.
+          </p>
+          <hr />
+          <h3>Supported file types</h3>
+          <p>
+            Documents: PDF, DOC, DOCX.
+            <br />
+            Images: JPG, JPEG, PNG.
+            <br />
+            Audio: MP3, WAV, M4A, AAC.
+            <br />
+            Video: MP4, MOV, WEBM.
+            <br />
+            Existing XLSX support is also available.
+          </p>
+          <p>
+            Up to 2 MB per upload in this browser demo. Media playback depends
+            on the browser's supported codecs.
           </p>
           <hr />
           <h3>A local demo workspace</h3>

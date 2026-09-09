@@ -1,3 +1,4 @@
+import type { FileMetadata } from "./types/files";
 export type Role = "Admin" | "Executive" | "Department Member";
 export interface User {
   id: string;
@@ -21,11 +22,10 @@ export interface Space {
   name: string;
   description: string;
 }
-export interface DocumentFile {
+export interface DocumentFile extends FileMetadata {
   id: string;
   spaceId: string;
   name: string;
-  type: "PDF" | "DOCX" | "XLSX" | "PNG";
   fileSizeBytes: number;
   uploadedBy: string;
   date: string;
@@ -47,6 +47,7 @@ export interface Activity {
   date: string;
 }
 export interface Database {
+  fileExamplesVersion?: number;
   storage: import("./types/storage").StorageConfiguration;
   users: User[];
   departments: Department[];

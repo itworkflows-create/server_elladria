@@ -1,9 +1,14 @@
 import type { Database } from "../types";
+import { enrichFile } from "./file-metadata";
+import { mockMediaFiles } from "./mock-files";
 import {
   getMockDepartmentQuota,
   mockStorageConfiguration,
 } from "./mock-storage";
-export const seed: Database = {
+const initialData: Omit<Database, "files"> & {
+  files: Parameters<typeof enrichFile>[0][];
+} = {
+  fileExamplesVersion: 1,
   storage: { ...mockStorageConfiguration },
   users: [
     {
@@ -165,6 +170,7 @@ export const seed: Database = {
   files: [
     {
       id: "f1",
+      previewUrl: "/demo/brand-guidelines.pdf",
       spaceId: "s1",
       name: "Brand guidelines 2026.pdf",
       type: "PDF",
@@ -187,6 +193,7 @@ export const seed: Database = {
     },
     {
       id: "f3",
+      previewUrl: "/demo/employee-handbook.docx",
       spaceId: "s5",
       name: "Employee handbook.docx",
       type: "DOCX",
@@ -298,5 +305,17 @@ export const seed: Database = {
       departmentId: "engineering",
       date: "2026-09-08T13:40:00Z",
     },
+  ],
+};
+export const seed: Database = {
+  ...initialData,
+  files: [
+    ...initialData.files.map((file) =>
+      enrichFile(
+        file,
+        initialData.spaces.find((s) => s.id === file.spaceId)!.departmentId,
+      ),
+    ),
+    ...mockMediaFiles,
   ],
 };

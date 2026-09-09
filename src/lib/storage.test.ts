@@ -47,7 +47,7 @@ describe("storage calculations", () => {
     expect(system.usedBytes).toBe(
       seed.files.reduce((n, f) => n + f.fileSizeBytes, 0),
     );
-    expect(system.fileCount).toBe(8);
+    expect(system.fileCount).toBe(seed.files.length);
     expect(system.largestDepartment?.department.id).toBe("engineering");
     expect(
       getSystemStorage({ ...seed, files: [] }).largestDepartment,

@@ -1,5 +1,12 @@
 import { seed } from "./seed";
-import { canAdmin, canManage } from "../lib/access";
+import { migrateFileMetadata, enrichFile } from "./file-metadata";
+import { addMockFileExamples } from "./mock-files";
+import {
+  validateFileName,
+  validateUploadFile,
+  getMimeType,
+} from "../lib/file-types";
+import { canAdmin, canManage, canView } from "../lib/access";
 import {
   DEFAULT_DEPARTMENT_QUOTA_BYTES,
   migrateStorageData,
@@ -20,7 +27,9 @@ function read(): Database {
         parsed.permissions &&
         parsed.activities
       )
-        return migrateStorageData(parsed);
+        return addMockFileExamples(
+          migrateFileMetadata(migrateStorageData(parsed)),
+        );
     }
   } catch {
     /* Start fresh if browser data is unavailable. */
@@ -32,7 +41,13 @@ export type Command =
   | { kind: "quota"; departmentId: string; storageQuotaBytes: number }
   | { kind: "department"; name: string; description: string }
   | { kind: "space"; name: string; description: string; departmentId: string }
-  | { kind: "upload"; file: Omit<DocumentFile, "id" | "date" | "uploadedBy"> }
+  | {
+      kind: "upload";
+      file: Pick<
+        DocumentFile,
+        "spaceId" | "name" | "fileSizeBytes" | "content"
+      > & { mimeType?: string; dataUrl?: string };
+    }
   | { kind: "deleteFile"; id: string }
   | { kind: "renameFile"; id: string; name: string }
   | { kind: "deleteDepartment"; id: string }
@@ -56,9 +71,25 @@ export type Command =
   | { kind: "profile"; name: string };
 export interface Repository {
   getDatabase(): Promise<Database>;
+  getFile(userId: string, fileId: string): Promise<DocumentFile>;
   execute(userId: string, command: Command): Promise<void>;
 }
 export const repository: Repository = {
+  async getFile(userId, fileId) {
+    const user = database.users.find((u) => u.id === userId);
+    const file = database.files.find((f) => f.id === fileId);
+    const departmentId = database.spaces.find(
+      (s) => s.id === file?.spaceId,
+    )?.departmentId;
+    if (
+      !user ||
+      !file ||
+      !departmentId ||
+      !canView(user, departmentId, database)
+    )
+      throw new Error("You do not have access to this file.");
+    return structuredClone(file);
+  },
   async getDatabase() {
     await new Promise((resolve) => setTimeout(resolve, 200));
     return structuredClone(database);
@@ -132,18 +163,30 @@ export const repository: Repository = {
         const space = db.spaces.find((s) => s.id === command.file.spaceId);
         if (!space) throw new Error("Select a storage space.");
         requireManage(space.departmentId);
+        const validationError = validateUploadFile({
+          name: command.file.name,
+          size: command.file.fileSizeBytes,
+          type: command.file.mimeType ?? "",
+        });
+        if (validationError) throw new Error(validationError);
         const quotaError = getUploadStorageError(
           db,
           space.departmentId,
           command.file.fileSizeBytes,
         );
         if (quotaError) throw new Error(quotaError);
-        db.files.unshift({
-          ...command.file,
-          id: crypto.randomUUID(),
-          date: new Date().toISOString(),
-          uploadedBy: user.id,
-        });
+        db.files.unshift(
+          enrichFile(
+            {
+              ...command.file,
+              mimeType: getMimeType(command.file.name),
+              id: crypto.randomUUID(),
+              date: new Date().toISOString(),
+              uploadedBy: user.id,
+            },
+            space.departmentId,
+          ),
+        );
         target = command.file.name;
         departmentId = space.departmentId;
         break;
@@ -159,7 +202,12 @@ export const repository: Repository = {
         target = file.name;
         if (command.kind === "deleteFile")
           db.files = db.files.filter((f) => f.id !== command.id);
-        else file.name = command.name;
+        else {
+          const error = validateFileName(command.name, file.extension);
+          if (error) throw new Error(error);
+          file.name = command.name.trim();
+          file.updatedAt = new Date().toISOString();
+        }
         break;
       }
       case "deleteDepartment": {

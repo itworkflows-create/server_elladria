@@ -2,14 +2,9 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Plus } from "lucide-react";
 import { useApp, useUser } from "../context";
 import { canManage, canView, fileDepartment } from "../lib/access";
-import {
-  AccessNote,
-  Badge,
-  Empty,
-  FileTable,
-  PageHeading,
-} from "../components/common";
+import { AccessNote, Badge, Empty, PageHeading } from "../components/common";
 import { Button } from "../components/ui/button";
+import { FileTable } from "../components/files/file-table";
 export function StorageDetails() {
   const { id } = useParams();
   const { db } = useApp();

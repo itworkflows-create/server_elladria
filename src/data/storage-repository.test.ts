@@ -73,7 +73,7 @@ describe("storage quota commands", () => {
     const file = {
       spaceId: "s1",
       name: "Test.pdf",
-      type: "PDF" as const,
+      mimeType: "application/pdf",
       fileSizeBytes: 101,
       content: "Mock upload",
     };
