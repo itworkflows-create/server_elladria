@@ -1,7 +1,13 @@
 import { useState } from "react";
-import { ArrowDownToLine, Eye, Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowDownToLine,
+  Eye,
+  FolderInput,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useApp, useUser } from "../../context";
-import { canManage, canView, fileDepartment } from "../../lib/access";
+import { canManage, canView } from "../../lib/access";
 import { downloadFile } from "../../lib/file-download";
 import type { DocumentFile } from "../../types";
 import { Button } from "../ui/button";
@@ -16,7 +22,7 @@ export function DownloadButton({
   const { db } = useApp();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  if (!canView(user, fileDepartment(db, file.spaceId), db)) return null;
+  if (!canView(user, file.departmentId, db)) return null;
   return (
     <div>
       <Button
@@ -60,15 +66,17 @@ export function FileActions({
   onPreview,
   onRename,
   onDelete,
+  onMove,
 }: {
   file: DocumentFile;
   onPreview: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onMove: () => void;
 }) {
   const { db } = useApp();
   const user = useUser();
-  const departmentId = fileDepartment(db, file.spaceId);
+  const departmentId = file.departmentId;
   if (!canView(user, departmentId, db)) return null;
   return (
     <div className="flex items-start">
@@ -84,6 +92,15 @@ export function FileActions({
       <DownloadButton file={file} iconOnly />
       {canManage(user, departmentId, db) && (
         <>
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Move file"
+            aria-label={`Move ${file.name}`}
+            onClick={onMove}
+          >
+            <FolderInput size={15} />
+          </Button>
           <Button
             variant="ghost"
             size="icon"

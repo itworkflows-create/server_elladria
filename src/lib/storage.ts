@@ -60,12 +60,10 @@ export function getDepartmentStorage(
 ): DepartmentStorageUsage {
   const department = db.departments.find((d) => d.id === departmentId);
   if (!department) throw new Error("Department not found.");
-  const spaceIds = new Set(
-    db.spaces.filter((s) => s.departmentId === departmentId).map((s) => s.id),
-  );
+
   return {
     ...calculateStorageUsage(
-      db.files.filter((f) => spaceIds.has(f.spaceId)),
+      db.files.filter((f) => f.departmentId === departmentId),
       department.storageQuotaBytes,
     ),
     department,

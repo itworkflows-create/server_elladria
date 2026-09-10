@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { useApp, useUser } from "../../context";
-import { canView, fileDepartment } from "../../lib/access";
+import { canView } from "../../lib/access";
 import {
   isAudioFile,
   isImageFile,
@@ -30,7 +30,7 @@ export function FilePreview({
   const [error, setError] = useState("");
   const [zoom, setZoom] = useState(false);
   const allowed =
-    canView(user, fileDepartment(db, file.spaceId), db) &&
+    canView(user, file.departmentId, db) &&
     db.files.some((f) => f.id === file.id);
   useEffect(() => {
     let disposed = false;
@@ -191,9 +191,10 @@ export function FilePreview({
               </dd>
             </div>
             <div>
-              <dt>Storage space</dt>
+              <dt>Folder</dt>
               <dd className="mt-1 text-slate-700">
-                {db.spaces.find((s) => s.id === file.spaceId)?.name}
+                {db.folders.find((s) => s.id === file.folderId)?.name ??
+                  "Department root"}
               </dd>
             </div>
             <div>

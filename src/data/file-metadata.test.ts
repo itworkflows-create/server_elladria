@@ -8,7 +8,7 @@ describe("file metadata migration", () => {
       {
         id: "legacy",
         name: "Notes.DOCX",
-        spaceId: "s1",
+        folderId: "s1",
         fileSizeBytes: 400,
         uploadedBy: "u3",
         date: "2026-09-01T10:00:00Z",

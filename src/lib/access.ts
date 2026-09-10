@@ -23,6 +23,3 @@ export function canManage(user: User, departmentId: string, db: Database) {
 }
 export const canAdmin = (user: User) => user.role === "Admin";
 export const canViewLogs = (user: User) => user.role !== "Department Member";
-export function fileDepartment(db: Database, spaceId: string) {
-  return db.spaces.find((s) => s.id === spaceId)?.departmentId ?? "";
-}

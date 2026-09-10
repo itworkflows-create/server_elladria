@@ -2,9 +2,9 @@ import { ArrowUpRight, Building2, Folder, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useApp, useUser } from "../context";
 import { canManage } from "../lib/access";
-import type { Department, Space } from "../types";
+import type { Department } from "../types";
 
-import { formatFileSize, sumFileSizes } from "../lib/storage";
+import { formatFileSize } from "../lib/storage";
 export const sizeLabel = formatFileSize;
 export const dateLabel = (date: string) =>
   new Date(date).toLocaleDateString("en-US", {
@@ -75,8 +75,8 @@ export function Empty({
 export function DepartmentCard({ department }: { department: Department }) {
   const { db } = useApp();
   const user = useUser();
-  const spaces = db.spaces.filter((s) => s.departmentId === department.id);
-  const files = db.files.filter((f) => spaces.some((s) => s.id === f.spaceId));
+  const folders = db.folders.filter((s) => s.departmentId === department.id);
+  const files = db.files.filter((f) => f.departmentId === department.id);
   return (
     <Link
       to={`/departments/${department.id}`}
@@ -96,32 +96,12 @@ export function DepartmentCard({ department }: { department: Department }) {
       <div className="card-meta">
         <span>
           <Folder size={14} />
-          {spaces.length} spaces <span className="mx-1">·</span> {files.length}{" "}
+          {folders.length} folders <span className="mx-1">·</span> {files.length}{" "}
           files
         </span>
         <Badge tone={canManage(user, department.id, db) ? "green" : "gray"}>
           {canManage(user, department.id, db) ? "Full access" : "View only"}
         </Badge>
-      </div>
-    </Link>
-  );
-}
-export function SpaceCard({ space }: { space: Space }) {
-  const { db } = useApp();
-  const files = db.files.filter((f) => f.spaceId === space.id);
-  return (
-    <Link className="department-card group" to={`/storage/${space.id}`}>
-      <div className="flex items-center justify-between">
-        <span className="department-icon amber">
-          <Folder size={25} />
-        </span>
-        <ArrowUpRight size={18} className="text-slate-400" />
-      </div>
-      <h3>{space.name}</h3>
-      <p>{space.description}</p>
-      <div className="card-meta">
-        <span>{files.length} files</span>
-        <span>{sizeLabel(sumFileSizes(files))}</span>
       </div>
     </Link>
   );

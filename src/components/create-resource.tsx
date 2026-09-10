@@ -15,11 +15,9 @@ const schema = z.object({
 export function CreateResource({
   open,
   close,
-  departmentId,
 }: {
   open: boolean;
   close: () => void;
-  departmentId?: string;
 }) {
   const { run, pending } = useApp();
   const {
@@ -32,23 +30,13 @@ export function CreateResource({
     <Modal
       open={open}
       onOpenChange={close}
-      title={departmentId ? "Create storage space" : "Create department"}
-      description={
-        departmentId
-          ? "Give your related documents a place of their own."
-          : "Create a home for your team and their knowledge."
-      }
+      title="Create department"
+      description="Create a home for your team and their knowledge."
     >
       <form
         className="form-stack"
         onSubmit={handleSubmit(async (values) => {
-          if (
-            await run(
-              departmentId
-                ? { kind: "space", departmentId, ...values }
-                : { kind: "department", ...values },
-            )
-          ) {
+          if (await run({ kind: "department", ...values })) {
             reset();
             close();
           }
@@ -56,12 +44,7 @@ export function CreateResource({
       >
         <label>
           Name
-          <input
-            {...register("name")}
-            placeholder={
-              departmentId ? "e.g. Project resources" : "e.g. Customer Success"
-            }
-          />
+          <input {...register("name")} placeholder="e.g. Customer Success" />
           {errors.name && <span className="error">{errors.name.message}</span>}
         </label>
         <label>

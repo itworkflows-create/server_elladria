@@ -16,11 +16,11 @@ import {
   DepartmentCard,
   Empty,
   PageHeading,
-  SpaceCard,
 } from "../components/common";
 import { Button } from "../components/ui/button";
 import { Modal } from "../components/ui/dialog";
 import { CreateResource } from "../components/create-resource";
+import { FolderBrowser } from "../components/folders/folder-browser";
 import { DepartmentStorage } from "../components/storage/department-storage";
 export function Departments({
   mode = "all",
@@ -63,7 +63,7 @@ export function Departments({
         description={
           mode === "shared"
             ? "Resources from other teams, shared with you by an administrator."
-            : "Explore the teams, spaces, and knowledge that bring us together."
+            : "Explore the teams, folders, and knowledge that bring us together."
         }
       >
         {canCreate && (
@@ -118,7 +118,7 @@ export function Departments({
                 ? "Try a different department name."
                 : mode === "shared"
                   ? "Departments will appear here when an administrator grants you access."
-                  : "Create your department, then add storage spaces and files."
+                  : "Create your department, then add folders and files."
             }
           >
             {canCreate && (
@@ -140,7 +140,6 @@ export function DepartmentDetails({ departmentId }: { departmentId?: string }) {
   const { db, run, pending } = useApp();
   const user = useUser();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
   const [remove, setRemove] = useState(false);
   const [rename, setRename] = useState(false);
   const [name, setName] = useState("");
@@ -152,7 +151,7 @@ export function DepartmentDetails({ departmentId }: { departmentId?: string }) {
         description="This department does not exist or you do not have access."
       />
     );
-  const spaces = db.spaces.filter((s) => s.departmentId === dept.id);
+  const folders = db.folders.filter((s) => s.departmentId === dept.id);
   return (
     <>
       <Link
@@ -181,57 +180,22 @@ export function DepartmentDetails({ departmentId }: { departmentId?: string }) {
             </Button>
           </>
         )}
-        {canManage(user, dept.id, db) && (
-          <Button onClick={() => setOpen(true)}>
-            <Plus size={17} />
-            Create space
-          </Button>
-        )}
       </PageHeading>
       <div className="flex flex-wrap gap-3 mb-8">
         <Badge>
           {canManage(user, dept.id, db) ? "Full access" : "View only"}
         </Badge>
-        <Badge tone="gray">{spaces.length} storage spaces</Badge>
+        <Badge tone="gray">{folders.length} folders</Badge>
         <Badge tone="gray">{dept.members} team members</Badge>
       </div>
       <DepartmentStorage key={dept.id} departmentId={dept.id} />
-      <div className="section-heading">
-        <div>
-          <h2>Storage spaces</h2>
-          <p>Everything your team needs, thoughtfully organized.</p>
-        </div>
-      </div>
-      <div className="department-grid">
-        {spaces.map((s) => (
-          <SpaceCard key={s.id} space={s} />
-        ))}
-      </div>
-      {!spaces.length && (
-        <div className="panel">
-          <Empty
-            title="A fresh space for your team"
-            description="Create your first storage space to start adding files."
-          >
-            {canManage(user, dept.id, db) && (
-              <Button onClick={() => setOpen(true)}>
-                Create storage space
-              </Button>
-            )}
-          </Empty>
-        </div>
-      )}
+      <FolderBrowser key={dept.id} departmentId={dept.id} />
       <AccessNote />
-      <CreateResource
-        open={open}
-        close={() => setOpen(false)}
-        departmentId={dept.id}
-      />
       <Modal
         open={remove}
         onOpenChange={setRemove}
         title="Delete department?"
-        description={`This permanently removes ${dept.name}, its ${spaces.length} storage spaces, all files inside them, and access grants from this demo. Members become unassigned.`}
+        description={`This permanently removes ${dept.name}, its ${folders.length} folders, all department files, and access grants from this demo. Members become unassigned.`}
       >
         <Button
           disabled={pending}

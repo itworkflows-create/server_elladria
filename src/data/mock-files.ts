@@ -5,7 +5,7 @@ export const mockMediaFiles = [
   enrichFile(
     {
       id: "media-photo",
-      spaceId: "s5",
+      folderId: "s5",
       name: "Team onboarding.jpg",
       fileSizeBytes: 32966,
       uploadedBy: "u6",
@@ -18,7 +18,7 @@ export const mockMediaFiles = [
   enrichFile(
     {
       id: "media-mp3",
-      spaceId: "s5",
+      folderId: "s5",
       name: "Interview sound check.mp3",
       fileSizeBytes: 145197,
       uploadedBy: "u6",
@@ -32,7 +32,7 @@ export const mockMediaFiles = [
   enrichFile(
     {
       id: "media-wav",
-      spaceId: "s5",
+      folderId: "s5",
       name: "Welcome audio cue.wav",
       fileSizeBytes: 576078,
       uploadedBy: "u6",
@@ -45,7 +45,7 @@ export const mockMediaFiles = [
   enrichFile(
     {
       id: "media-video",
-      spaceId: "s7",
+      folderId: "s7",
       name: "Workspace training.mp4",
       fileSizeBytes: 59762,
       uploadedBy: "u1",
@@ -74,7 +74,7 @@ export function addMockFileExamples(
       }),
       ...mockMediaFiles.filter(
         (file) =>
-          db.spaces.some((s) => s.id === file.spaceId) &&
+          db.folders.some((s) => s.id === file.folderId) &&
           !db.files.some((f) => f.id === file.id),
       ),
     ],

@@ -8,7 +8,7 @@ import {
 type ExistingFile = Pick<
   DocumentFile,
   | "id"
-  | "spaceId"
+  | "folderId"
   | "name"
   | "fileSizeBytes"
   | "uploadedBy"
@@ -39,7 +39,9 @@ export function migrateFileMetadata(db: Database): Database {
     files: db.files.map((file) =>
       enrichFile(
         file,
-        db.spaces.find((s) => s.id === file.spaceId)?.departmentId ?? "",
+        file.departmentId ??
+          db.folders.find((s) => s.id === file.folderId)?.departmentId ??
+          "",
       ),
     ),
   };

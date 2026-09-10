@@ -16,15 +16,19 @@ export interface Department {
   members: number;
   storageQuotaBytes: number;
 }
-export interface Space {
+export interface Folder {
   id: string;
   departmentId: string;
   name: string;
-  description: string;
+  parentFolderId: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  description?: string;
 }
 export interface DocumentFile extends FileMetadata {
   id: string;
-  spaceId: string;
+  folderId: string | null;
   name: string;
   fileSizeBytes: number;
   uploadedBy: string;
@@ -51,7 +55,7 @@ export interface Database {
   storage: import("./types/storage").StorageConfiguration;
   users: User[];
   departments: Department[];
-  spaces: Space[];
+  folders: Folder[];
   files: DocumentFile[];
   permissions: Permission[];
   activities: Activity[];

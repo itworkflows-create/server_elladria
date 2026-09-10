@@ -1,7 +1,9 @@
 import { lazy, Suspense, useState } from "react";
 import { Search, X } from "lucide-react";
 import { useApp, useUser } from "../../context";
-import { canView, fileDepartment } from "../../lib/access";
+import { canView } from "../../lib/access";
+import { getFilePath } from "../../lib/folders";
+import { MoveDialog } from "../folders/folder-dialogs";
 import { validateFileName } from "../../lib/file-types";
 import type { DocumentFile } from "../../types";
 import { Avatar, dateLabel, Empty, sizeLabel } from "../common";
@@ -29,12 +31,15 @@ export function FileTable({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<DocumentFile | null>(null);
   const [renaming, setRenaming] = useState<DocumentFile | null>(null);
+  const [moving, setMoving] = useState<DocumentFile | null>(null);
   const [name, setName] = useState("");
   const filtered = files
     .filter(
       (file) =>
-        canView(user, fileDepartment(db, file.spaceId), db) &&
-        file.name.toLowerCase().includes(search.toLowerCase()) &&
+        canView(user, file.departmentId, db) &&
+        getFilePath(db, user, file)
+          .toLowerCase()
+          .includes(search.toLowerCase()) &&
         (category === "all" || file.fileCategory === category),
     )
     .sort((a, b) =>
@@ -102,7 +107,7 @@ export function FileTable({
           <table>
             <thead>
               <tr>
-                <th>File name / storage space</th>
+                <th>File name / path</th>
                 <th>Category</th>
                 <th>Department</th>
                 <th>Uploaded by</th>
@@ -114,7 +119,7 @@ export function FileTable({
             <tbody>
               {filtered.slice(0, compact ? 5 : undefined).map((file) => {
                 const owner = db.users.find((u) => u.id === file.uploadedBy);
-                const deptId = fileDepartment(db, file.spaceId);
+                const deptId = file.departmentId;
                 return (
                   <tr key={file.id}>
                     <td>
@@ -123,11 +128,12 @@ export function FileTable({
                         onClick={() => setPreviewId(file.id)}
                       >
                         <FileIcon file={file} />
-                        <span className="max-w-64 truncate" title={file.name}>
+                        <span
+                          className="max-w-64 truncate"
+                          title={getFilePath(db, user, file)}
+                        >
                           {file.name}
-                          <small>
-                            {db.spaces.find((s) => s.id === file.spaceId)?.name}
-                          </small>
+                          <small>{getFilePath(db, user, file)}</small>
                         </span>
                       </button>
                     </td>
@@ -150,6 +156,7 @@ export function FileTable({
                           setName(file.name);
                         }}
                         onDelete={() => setDeleting(file)}
+                        onMove={() => setMoving(file)}
                       />
                     </td>
                   </tr>
@@ -158,6 +165,9 @@ export function FileTable({
             </tbody>
           </table>
         </div>
+      )}
+      {moving && (
+        <MoveDialog item={moving} kind="file" close={() => setMoving(null)} />
       )}
       {preview && (
         <Suspense

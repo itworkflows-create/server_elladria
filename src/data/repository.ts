@@ -1,3 +1,14 @@
+import { migrateFolders } from "./folder-migration";
+import {
+  createFolder,
+  renameFolder,
+  moveFolder,
+  deleteFolder,
+  moveFile,
+  requireFolderAccess,
+  validateDestination,
+  getFolderBreadcrumbs,
+} from "../lib/folders";
 import { seed } from "./seed";
 import { migrateFileMetadata, enrichFile } from "./file-metadata";
 import { addMockFileExamples } from "./mock-files";
@@ -22,13 +33,14 @@ function read(): Database {
       if (
         parsed.users?.length &&
         parsed.departments &&
-        parsed.spaces &&
+        (parsed.folders ||
+          (parsed as Database & { spaces?: unknown }).spaces) &&
         parsed.files &&
         parsed.permissions &&
         parsed.activities
       )
         return addMockFileExamples(
-          migrateFileMetadata(migrateStorageData(parsed)),
+          migrateFileMetadata(migrateStorageData(migrateFolders(parsed))),
         );
     }
   } catch {
@@ -40,13 +52,22 @@ let database = read();
 export type Command =
   | { kind: "quota"; departmentId: string; storageQuotaBytes: number }
   | { kind: "department"; name: string; description: string }
-  | { kind: "space"; name: string; description: string; departmentId: string }
+  | {
+      kind: "createFolder";
+      name: string;
+      departmentId: string;
+      parentFolderId: string | null;
+    }
+  | { kind: "renameFolder"; id: string; name: string }
+  | { kind: "moveFolder"; id: string; parentFolderId: string | null }
+  | { kind: "deleteFolder"; id: string; confirmRecursive?: boolean }
+  | { kind: "moveFile"; id: string; folderId: string | null }
   | {
       kind: "upload";
       file: Pick<
         DocumentFile,
-        "spaceId" | "name" | "fileSizeBytes" | "content"
-      > & { mimeType?: string; dataUrl?: string };
+        "folderId" | "name" | "fileSizeBytes" | "content"
+      > & { departmentId?: string; mimeType?: string; dataUrl?: string };
     }
   | { kind: "deleteFile"; id: string }
   | { kind: "renameFile"; id: string; name: string }
@@ -78,9 +99,7 @@ export const repository: Repository = {
   async getFile(userId, fileId) {
     const user = database.users.find((u) => u.id === userId);
     const file = database.files.find((f) => f.id === fileId);
-    const departmentId = database.spaces.find(
-      (s) => s.id === file?.spaceId,
-    )?.departmentId;
+    const departmentId = file?.departmentId;
     if (
       !user ||
       !file ||
@@ -148,21 +167,40 @@ export const repository: Repository = {
         departmentId = id;
         break;
       }
-      case "space":
-        requireManage(command.departmentId);
-        db.spaces.push({
-          id: crypto.randomUUID(),
-          name: command.name,
-          description: command.description,
-          departmentId: command.departmentId,
-        });
-        target = command.name;
-        departmentId = command.departmentId;
+      case "createFolder":
+      case "renameFolder":
+      case "moveFolder":
+      case "deleteFolder":
+      case "moveFile": {
+        const result =
+          command.kind === "createFolder"
+            ? createFolder(
+                db,
+                user,
+                command.departmentId,
+                command.parentFolderId,
+                command.name,
+              )
+            : command.kind === "renameFolder"
+              ? renameFolder(db, user, command.id, command.name)
+              : command.kind === "moveFolder"
+                ? moveFolder(db, user, command.id, command.parentFolderId)
+                : command.kind === "deleteFolder"
+                  ? deleteFolder(db, user, command.id, command.confirmRecursive)
+                  : moveFile(db, user, command.id, command.folderId);
+        target = result.name;
+        departmentId = result.departmentId;
         break;
+      }
       case "upload": {
-        const space = db.spaces.find((s) => s.id === command.file.spaceId);
-        if (!space) throw new Error("Select a storage space.");
-        requireManage(space.departmentId);
+        const uploadDepartment =
+          command.file.departmentId ??
+          db.folders.find((f) => f.id === command.file.folderId)
+            ?.departmentId ??
+          "";
+        requireFolderAccess(db, user, uploadDepartment, true);
+        validateDestination(db, uploadDepartment, command.file.folderId);
+        getFolderBreadcrumbs(db, user, command.file.folderId);
         const validationError = validateUploadFile({
           name: command.file.name,
           size: command.file.fileSizeBytes,
@@ -171,7 +209,7 @@ export const repository: Repository = {
         if (validationError) throw new Error(validationError);
         const quotaError = getUploadStorageError(
           db,
-          space.departmentId,
+          uploadDepartment,
           command.file.fileSizeBytes,
         );
         if (quotaError) throw new Error(quotaError);
@@ -184,20 +222,18 @@ export const repository: Repository = {
               date: new Date().toISOString(),
               uploadedBy: user.id,
             },
-            space.departmentId,
+            uploadDepartment,
           ),
         );
         target = command.file.name;
-        departmentId = space.departmentId;
+        departmentId = uploadDepartment;
         break;
       }
       case "deleteFile":
       case "renameFile": {
         const file = db.files.find((f) => f.id === command.id);
         if (!file) throw new Error("File not found.");
-        departmentId = db.spaces.find(
-          (s) => s.id === file.spaceId,
-        )?.departmentId;
+        departmentId = file.departmentId;
         requireManage(departmentId ?? "");
         target = file.name;
         if (command.kind === "deleteFile")
@@ -215,13 +251,8 @@ export const repository: Repository = {
         const department = db.departments.find((d) => d.id === command.id);
         if (!department) throw new Error("Department not found.");
         target = department.name;
-        const spaceIds = new Set(
-          db.spaces
-            .filter((s) => s.departmentId === command.id)
-            .map((s) => s.id),
-        );
-        db.files = db.files.filter((f) => !spaceIds.has(f.spaceId));
-        db.spaces = db.spaces.filter((s) => s.departmentId !== command.id);
+        db.files = db.files.filter((f) => f.departmentId !== command.id);
+        db.folders = db.folders.filter((s) => s.departmentId !== command.id);
         db.departments = db.departments.filter((d) => d.id !== command.id);
         db.permissions = db.permissions.filter(
           (p) => p.departmentId !== command.id,
@@ -333,7 +364,11 @@ export const repository: Repository = {
       action: {
         quota: "changed storage quota",
         department: "created department",
-        space: "created storage space",
+        createFolder: "created folder",
+        renameFolder: "renamed folder",
+        moveFolder: "moved folder",
+        deleteFolder: "deleted folder",
+        moveFile: "moved file",
         upload: "uploaded",
         deleteFile: "deleted",
         renameFile: "renamed",

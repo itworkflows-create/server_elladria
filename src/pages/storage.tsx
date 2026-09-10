@@ -61,7 +61,7 @@ export function StoragePage() {
             </span>
             <div>
               <h2>System storage</h2>
-              <p className="muted">Across all departments and storage spaces</p>
+              <p className="muted">Across all departments and folders</p>
             </div>
           </div>
         </CardHeader>

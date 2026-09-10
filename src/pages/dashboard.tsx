@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useApp, useUser } from "../context";
-import { canManage, canView, fileDepartment } from "../lib/access";
+import { canManage, canView } from "../lib/access";
 import {
   Avatar,
   DepartmentCard,
@@ -31,9 +31,9 @@ export function Dashboard() {
   const { db } = useApp();
   const user = useUser();
   const departments = db.departments.filter((d) => canView(user, d.id, db));
-  const spaces = db.spaces.filter((s) => canView(user, s.departmentId, db));
+  const folders = db.folders.filter((s) => canView(user, s.departmentId, db));
   const files = db.files.filter((f) =>
-    canView(user, fileDepartment(db, f.spaceId), db),
+    canView(user, f.departmentId, db),
   );
   const storage =
     user.role !== "Department Member"
@@ -122,8 +122,8 @@ export function Dashboard() {
             color: "purple",
           },
           {
-            label: "Storage spaces",
-            value: spaces.length.toString().padStart(2, "0"),
+            label: "Folders",
+            value: folders.length.toString().padStart(2, "0"),
             note: "Organized, ready to explore",
             icon: Folder,
             color: "orange",

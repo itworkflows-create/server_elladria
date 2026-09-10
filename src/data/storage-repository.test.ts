@@ -71,7 +71,7 @@ describe("storage quota commands", () => {
     });
     const before = await repository.getDatabase();
     const file = {
-      spaceId: "s1",
+      folderId: "s1",
       name: "Test.pdf",
       mimeType: "application/pdf",
       fileSizeBytes: 101,

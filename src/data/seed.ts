@@ -5,7 +5,13 @@ import {
   getMockDepartmentQuota,
   mockStorageConfiguration,
 } from "./mock-storage";
-const initialData: Omit<Database, "files"> & {
+const initialData: Omit<Database, "files" | "folders"> & {
+  folders: Array<
+    Pick<
+      Database["folders"][number],
+      "id" | "departmentId" | "name" | "description"
+    >
+  >;
   files: Parameters<typeof enrichFile>[0][];
 } = {
   fileExamplesVersion: 1,
@@ -117,7 +123,7 @@ const initialData: Omit<Database, "files"> & {
       storageQuotaBytes: getMockDepartmentQuota("operations"),
     },
   ],
-  spaces: [
+  folders: [
     {
       id: "s1",
       departmentId: "design",
@@ -171,7 +177,7 @@ const initialData: Omit<Database, "files"> & {
     {
       id: "f1",
       previewUrl: "/demo/brand-guidelines.pdf",
-      spaceId: "s1",
+      folderId: "s1",
       name: "Brand guidelines 2026.pdf",
       type: "PDF",
       fileSizeBytes: 4200000,
@@ -182,7 +188,7 @@ const initialData: Omit<Database, "files"> & {
     },
     {
       id: "f2",
-      spaceId: "s3",
+      folderId: "s3",
       name: "Q3 financial overview.xlsx",
       type: "XLSX",
       fileSizeBytes: 1800000,
@@ -194,7 +200,7 @@ const initialData: Omit<Database, "files"> & {
     {
       id: "f3",
       previewUrl: "/demo/employee-handbook.docx",
-      spaceId: "s5",
+      folderId: "s5",
       name: "Employee handbook.docx",
       type: "DOCX",
       fileSizeBytes: 2400000,
@@ -205,7 +211,7 @@ const initialData: Omit<Database, "files"> & {
     },
     {
       id: "f4",
-      spaceId: "s4",
+      folderId: "s4",
       name: "API architecture v2.pdf",
       type: "PDF",
       fileSizeBytes: 6700000,
@@ -216,7 +222,7 @@ const initialData: Omit<Database, "files"> & {
     },
     {
       id: "f5",
-      spaceId: "s6",
+      folderId: "s6",
       name: "Autumn campaign brief.pdf",
       type: "PDF",
       fileSizeBytes: 3100000,
@@ -227,7 +233,7 @@ const initialData: Omit<Database, "files"> & {
     },
     {
       id: "f6",
-      spaceId: "s7",
+      folderId: "s7",
       name: "Operations roadmap.docx",
       type: "DOCX",
       fileSizeBytes: 980000,
@@ -238,7 +244,7 @@ const initialData: Omit<Database, "files"> & {
     },
     {
       id: "f7",
-      spaceId: "s2",
+      folderId: "s2",
       name: "Research synthesis.pdf",
       type: "PDF",
       fileSizeBytes: 2300000,
@@ -249,7 +255,7 @@ const initialData: Omit<Database, "files"> & {
     },
     {
       id: "f8",
-      spaceId: "s8",
+      folderId: "s8",
       name: "Supplier evaluation.xlsx",
       type: "XLSX",
       fileSizeBytes: 560000,
@@ -309,11 +315,18 @@ const initialData: Omit<Database, "files"> & {
 };
 export const seed: Database = {
   ...initialData,
+  folders: initialData.folders.map((f) => ({
+    ...f,
+    parentFolderId: null,
+    createdBy: "u1",
+    createdAt: "2026-09-01T00:00:00.000Z",
+    updatedAt: "2026-09-01T00:00:00.000Z",
+  })),
   files: [
     ...initialData.files.map((file) =>
       enrichFile(
         file,
-        initialData.spaces.find((s) => s.id === file.spaceId)!.departmentId,
+        initialData.folders.find((s) => s.id === file.folderId)!.departmentId,
       ),
     ),
     ...mockMediaFiles,

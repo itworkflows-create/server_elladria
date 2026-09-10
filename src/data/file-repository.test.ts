@@ -37,7 +37,7 @@ describe("mixed file permissions and accounting", () => {
       await repository.execute("u3", {
         kind: "upload",
         file: {
-          spaceId: "s1",
+          folderId: "s1",
           name,
           mimeType: "",
           fileSizeBytes: 1000,
@@ -78,7 +78,7 @@ describe("mixed file permissions and accounting", () => {
   it("rejects unauthorized, unsupported and over-quota media writes without side effects", async () => {
     const { repository } = await import("./repository");
     const file = {
-      spaceId: "s1",
+      folderId: "s1",
       name: "Video.mp4",
       mimeType: "video/mp4",
       fileSizeBytes: 100,
@@ -90,7 +90,7 @@ describe("mixed file permissions and accounting", () => {
     await expect(
       repository.execute("u3", {
         kind: "upload",
-        file: { ...file, spaceId: "s6" },
+        file: { ...file, folderId: "s6" },
       }),
     ).rejects.toThrow("permission");
     await expect(

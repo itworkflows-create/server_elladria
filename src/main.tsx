@@ -7,7 +7,7 @@ import { Layout } from "./components/layout";
 import { Login } from "./pages/login";
 import { Dashboard } from "./pages/dashboard";
 import { DepartmentDetails, Departments } from "./pages/departments";
-import { SearchFiles, StorageDetails } from "./pages/files";
+import { SearchFiles, StorageDetails, FolderDetails } from "./pages/files";
 import { UploadFile } from "./pages/upload";
 import { ActivityPage, PermissionsPage, UsersPage } from "./pages/admin";
 import { SettingsPage } from "./pages/settings";
@@ -56,6 +56,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 }
               />
               <Route path="departments/:id" element={<DepartmentDetails />} />
+              <Route path="folders/:id" element={<FolderDetails />} />
               <Route path="storage/:id" element={<StorageDetails />} />
               <Route
                 path="upload"

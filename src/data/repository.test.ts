@@ -20,8 +20,8 @@ describe("mock repository authorization", () => {
     await repository.execute("u1", { kind: "deleteDepartment", id: "design" });
     const db = await repository.getDatabase();
     expect(db.departments.some((d) => d.id === "design")).toBe(false);
-    expect(db.spaces.some((s) => s.departmentId === "design")).toBe(false);
-    expect(db.files.some((f) => f.spaceId === "s1" || f.spaceId === "s2")).toBe(
+    expect(db.folders.some((s) => s.departmentId === "design")).toBe(false);
+    expect(db.files.some((f) => f.folderId === "s1" || f.folderId === "s2")).toBe(
       false,
     );
     expect(db.permissions.some((p) => p.departmentId === "design")).toBe(false);

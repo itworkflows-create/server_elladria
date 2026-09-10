@@ -8,6 +8,7 @@ import { useApp, useUser } from "../context";
 import { canManage } from "../lib/access";
 import { Empty, PageHeading, sizeLabel } from "../components/common";
 import { Button } from "../components/ui/button";
+import { FolderPicker } from "../components/folders/folder-picker";
 import { FILE_ACCEPT, validateUploadFile } from "../lib/file-types";
 import { fileService } from "../lib/file-service";
 import {
@@ -16,7 +17,8 @@ import {
   getUploadStorageError,
 } from "../lib/storage";
 const schema = z.object({
-  spaceId: z.string().min(1, "Choose a storage space."),
+  departmentId: z.string().min(1, "Choose a department."),
+  folderId: z.string().nullable(),
   description: z.string().max(500, "Use 500 characters or fewer."),
 });
 export function UploadFile() {
@@ -27,28 +29,37 @@ export function UploadFile() {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [reading, setReading] = useState(false);
-  const spaces = db.spaces.filter((s) => canManage(user, s.departmentId, db));
+  const departments = db.departments.filter((d) => canManage(user, d.id, db));
+  const initialFolder = db.folders.find(
+    (f) => f.id === (params.get("folder") ?? params.get("space")),
+  );
+  const initialDepartment =
+    initialFolder?.departmentId ?? params.get("department") ?? "";
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
-      spaceId: spaces.some((s) => s.id === params.get("space"))
-        ? params.get("space")!
+      departmentId: departments.some((d) => d.id === initialDepartment)
+        ? initialDepartment
         : "",
+      folderId: initialFolder?.id ?? null,
       description: "",
     },
   });
-  const selectedSpace = spaces.find((s) => s.id === watch("spaceId"));
-  const storage = selectedSpace
-    ? getDepartmentStorage(db, selectedSpace.departmentId)
+  const selectedDepartment = departments.find(
+    (d) => d.id === watch("departmentId"),
+  );
+  const storage = selectedDepartment
+    ? getDepartmentStorage(db, selectedDepartment.id)
     : null;
   const quotaError =
-    file && selectedSpace
-      ? getUploadStorageError(db, selectedSpace.departmentId, file.size)
+    file && selectedDepartment
+      ? getUploadStorageError(db, selectedDepartment.id, file.size)
       : null;
   function choose(next?: File) {
     setError("");
@@ -59,10 +70,10 @@ export function UploadFile() {
       setError(validationError);
       return;
     }
-    if (selectedSpace) {
+    if (selectedDepartment) {
       const message = getUploadStorageError(
         db,
-        selectedSpace.departmentId,
+        selectedDepartment.id,
         next.size,
       );
       if (message) {
@@ -72,7 +83,7 @@ export function UploadFile() {
     }
     setFile(next);
   }
-  if (!spaces.length)
+  if (!departments.length)
     return (
       <>
         <PageHeading
@@ -81,8 +92,8 @@ export function UploadFile() {
         />
         <div className="panel">
           <Empty
-            title="Create a storage space first"
-            description="You need a storage space with manage access to upload files."
+            title="Choose or create a department first"
+            description="You need a department with manage access to upload files."
           >
             <Button asChild>
               <Link to="/my-department">Go to my department</Link>
@@ -106,14 +117,16 @@ export function UploadFile() {
               setError("Choose a file to upload.");
               return;
             }
-            const targetSpace = spaces.find((s) => s.id === values.spaceId);
-            if (!targetSpace) {
-              setError("Choose a storage space.");
+            const targetDepartment = departments.find(
+              (d) => d.id === values.departmentId,
+            );
+            if (!targetDepartment) {
+              setError("Choose a department.");
               return;
             }
             const message = getUploadStorageError(
               db,
-              targetSpace.departmentId,
+              targetDepartment.id,
               file.size,
             );
             if (message) {
@@ -127,13 +140,18 @@ export function UploadFile() {
                 await run({
                   kind: "upload",
                   file: {
-                    spaceId: values.spaceId,
+                    folderId: values.folderId,
+                    departmentId: values.departmentId,
                     ...uploaded,
                     content: values.description,
                   },
                 })
               )
-                navigate(`/storage/${values.spaceId}`);
+                navigate(
+                  values.folderId
+                    ? `/folders/${values.folderId}`
+                    : `/departments/${values.departmentId}`,
+                );
             } catch (error) {
               setError(
                 error instanceof Error
@@ -152,23 +170,35 @@ export function UploadFile() {
             </p>
           </div>
           <label>
-            Storage space
+            Department
             <select
-              {...register("spaceId", { onChange: () => setError("") })}
+              {...register("departmentId", {
+                onChange: () => {
+                  setValue("folderId", null);
+                  setError("");
+                },
+              })}
               disabled={reading || pending}
             >
-              <option value="">Choose a storage space</option>
-              {spaces.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {db.departments.find((d) => d.id === s.departmentId)?.name} /{" "}
-                  {s.name}
+              <option value="">Choose a department</option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
                 </option>
               ))}
             </select>
-            {errors.spaceId && (
-              <span className="error">{errors.spaceId.message}</span>
+            {errors.departmentId && (
+              <span className="error">{errors.departmentId.message}</span>
             )}
           </label>
+          {selectedDepartment && (
+            <FolderPicker
+              departmentId={selectedDepartment.id}
+              value={watch("folderId")}
+              onChange={(id) => setValue("folderId", id)}
+              disabled={reading || pending}
+            />
+          )}
           {storage && (
             <p className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
               {storage.department.name}:{" "}
