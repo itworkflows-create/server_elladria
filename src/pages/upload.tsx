@@ -8,6 +8,7 @@ import { useApp, useUser } from "../context";
 import { canManage } from "../lib/access";
 import { Empty, PageHeading, sizeLabel } from "../components/common";
 import { Button } from "../components/ui/button";
+import { isDemoMode } from "../lib/supabase";
 import { FolderPicker } from "../components/folders/folder-picker";
 import { FILE_ACCEPT, validateUploadFile } from "../lib/file-types";
 import { fileService } from "../lib/file-service";
@@ -237,6 +238,7 @@ export function UploadFile() {
               {file ? "Choose a different file" : "Browse files"}
             </span>
           </label>
+          {(pending || reading) && <p role="status" aria-live="polite">{reading && !pending ? "Preparing your file…" : "Uploading and saving your file…"}</p>}
           {(quotaError || error) && (
             <p role="alert" className="error">
               {quotaError || error}
@@ -289,14 +291,13 @@ export function UploadFile() {
             Existing XLSX support is also available.
           </p>
           <p>
-            Up to 2 MB per upload in this browser demo. Media playback depends
+            Up to 2 MB per upload. Media playback depends
             on the browser's supported codecs.
           </p>
           <hr />
-          <h3>A local demo workspace</h3>
+          <h3>{isDemoMode ? "A local demo workspace" : "Private company storage"}</h3>
           <p>
-            Files stay in this browser. Small uploads can be previewed and
-            downloaded; no external storage is connected.
+            {isDemoMode ? "Files stay in this browser. No external storage is connected." : "Files are stored privately. Preview and download links expire; reopen the file to request a fresh link."}
           </p>
         </aside>
       </div>

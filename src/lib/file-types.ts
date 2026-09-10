@@ -116,7 +116,7 @@ export function validateUploadFile(file: {
   if (!Number.isSafeInteger(file.size) || file.size <= 0)
     return "This file is empty or has an invalid size. Choose a non-empty file.";
   if (file.size > MAX_MOCK_FILE_BYTES)
-    return "Choose a file of 2 MB or smaller for this local demo.";
+    return "Choose a file of 2 MB or smaller.";
   const mime = file.type.toLowerCase().split(";")[0].trim();
   if (
     mime &&

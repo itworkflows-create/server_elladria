@@ -7,6 +7,10 @@ dist/
 *.tsbuildinfo
 .env
 .env.local
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
 #launch.json folder
 .vscode/
 #Cache folder

@@ -10,7 +10,7 @@ beforeEach(() => {
 });
 describe("mock repository authorization", () => {
   it("allows only admins to delete a department and cleans up related resources", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await expect(
       repository.execute("u2", { kind: "deleteDepartment", id: "design" }),
     ).rejects.toThrow("Administrator");
@@ -29,7 +29,7 @@ describe("mock repository authorization", () => {
     expect(db.files.some((f) => f.id === "f2")).toBe(true);
   });
   it("rejects executive and member admin operations", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await expect(
       repository.execute("u2", {
         kind: "department",
@@ -45,7 +45,7 @@ describe("mock repository authorization", () => {
     ).rejects.toThrow("permission");
   });
   it("allows a new member to create exactly one owned department", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await repository.execute("u7", {
       kind: "department",
       name: "Customer Success",
@@ -63,7 +63,7 @@ describe("mock repository authorization", () => {
     ).rejects.toThrow();
   });
   it("applies grants and revocations to file mutations immediately", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await expect(
       repository.execute("u3", {
         kind: "renameFile",
@@ -93,7 +93,7 @@ describe("mock repository authorization", () => {
     ).rejects.toThrow("permission");
   });
   it("protects the active admin and retains files when removing a user", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await expect(
       repository.execute("u1", { kind: "deleteUser", id: "u1" }),
     ).rejects.toThrow("yourself");

@@ -1,4 +1,4 @@
-export type FileCategory = "document" | "image" | "audio" | "video" | "other";
+export type FileCategory = "document" | "image" | "audio" | "video" | "spreadsheet" | "other";
 export type FileIconKind =
   "pdf" | "word" | "image" | "audio" | "video" | "spreadsheet" | "file";
 export interface FileMetadata {

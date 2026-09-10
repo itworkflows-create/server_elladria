@@ -25,6 +25,7 @@ import {
   Leaf,
   HardDrive,
 } from "lucide-react";
+import { isDemoMode } from "../lib/supabase";
 import { useApp } from "../context";
 import { Avatar, Badge } from "./common";
 import { Button } from "./ui/button";
@@ -39,7 +40,7 @@ export function Logo() {
   );
 }
 export function Layout() {
-  const { user, db, signOut, notice, dismiss } = useApp();
+  const { user, db, signOut, notice, dismiss, run, pending } = useApp();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
@@ -221,13 +222,14 @@ export function Layout() {
           </div>
         </header>
         <main>
+          {!!db.pendingOperations?.length && <section className="panel mb-5 p-4" aria-label="Pending operations"><h2>Pending cleanup</h2><p className="muted">A previous operation needs another attempt to finish.</p>{db.pendingOperations.map(operation => <div key={operation.id} className="mt-3 flex items-center justify-between gap-3"><span>{operation.name}</span><Button variant="outline" disabled={pending} onClick={() => void run({ kind: "retryOperation", id: operation.id, operation: operation.kind })}>{operation.kind === "upload" ? "Clean up upload" : "Retry deletion"}</Button></div>)}</section>}
           <Outlet />
         </main>
         <footer>
           <span>© 2026 Elladria. A more connected workspace.</span>
           <span>
             <span className="status-dot" />
-            Demo workspace · Local data
+            {isDemoMode ? "Demo workspace · Local data" : "Private workspace · Supabase"}
           </span>
         </footer>
       </div>

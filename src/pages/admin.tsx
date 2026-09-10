@@ -13,6 +13,7 @@ import {
 } from "../components/common";
 import { Button } from "../components/ui/button";
 import { Modal } from "../components/ui/dialog";
+import { isDemoMode } from "../lib/supabase";
 import type { Role } from "../types";
 const roles: Role[] = ["Admin", "Executive", "Department Member"];
 const userSchema = z.object({
@@ -20,6 +21,7 @@ const userSchema = z.object({
   email: z.string().trim().email(),
   role: z.enum(["Admin", "Executive", "Department Member"]),
   departmentId: z.string(),
+  password: isDemoMode ? z.string().optional() : z.string().min(12, "Use at least 12 characters.").max(128),
 });
 export function UsersPage() {
   const { db, run, pending } = useApp();
@@ -157,7 +159,7 @@ export function UsersPage() {
         open={open}
         onOpenChange={setOpen}
         title="Add a team member"
-        description="Create a mock user and assign their initial role."
+        description={isDemoMode ? "Create a demo user and assign their initial role." : "Create an account and assign its initial role. Share the password securely with the new user."}
       >
         <form
           className="form-stack"
@@ -182,6 +184,7 @@ export function UsersPage() {
               <span className="error">{errors.email.message}</span>
             )}
           </label>
+          {!isDemoMode && <label>Initial password<input type="password" autoComplete="new-password" {...register("password")} />{errors.password && <span className="error">{errors.password.message}</span>}</label>}
           <label>
             Role
             <select {...register("role")}>
@@ -208,7 +211,7 @@ export function UsersPage() {
         open={!!remove}
         onOpenChange={() => setRemove(null)}
         title="Remove user?"
-        description="This removes their demo account and permission grants. Existing uploaded files are retained."
+        description="This removes their account and permission grants. Existing uploaded files are retained."
       >
         <Button
           variant="destructive"

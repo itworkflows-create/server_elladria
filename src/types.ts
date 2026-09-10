@@ -35,6 +35,7 @@ export interface DocumentFile extends FileMetadata {
   date: string;
   content: string;
   dataUrl?: string;
+  pendingDeletion?: boolean;
 }
 export interface Permission {
   id: string;
@@ -51,6 +52,7 @@ export interface Activity {
   date: string;
 }
 export interface Database {
+  pendingOperations?: { id: string; name: string; kind: "upload" | "deletion" }[];
   fileExamplesVersion?: number;
   storage: import("./types/storage").StorageConfiguration;
   users: User[];

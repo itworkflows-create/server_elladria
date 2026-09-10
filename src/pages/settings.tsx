@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useApp, useUser } from "../context";
 import { Avatar, Badge, PageHeading } from "../components/common";
+import { isDemoMode } from "../lib/supabase";
 import { Button } from "../components/ui/button";
 const schema = z.object({
   name: z.string().trim().min(2, "Use at least 2 characters.").max(80),
@@ -78,16 +79,16 @@ export function SettingsPage() {
             <div>
               <dt>Environment</dt>
               <dd>
-                <Badge tone="amber">Local demo</Badge>
+                <Badge tone={isDemoMode ? "amber" : "green"}>{isDemoMode ? "Local demo" : "Connected"}</Badge>
               </dd>
             </div>
             <div>
               <dt>Data storage</dt>
-              <dd>This browser</dd>
+              <dd>{isDemoMode ? "This browser" : "Private Supabase storage"}</dd>
             </div>
             <div>
               <dt>Authentication</dt>
-              <dd>Demo accounts</dd>
+              <dd>{isDemoMode ? "Demo accounts" : "Supabase Auth"}</dd>
             </div>
             <div>
               <dt>Version</dt>
@@ -95,8 +96,7 @@ export function SettingsPage() {
             </div>
           </dl>
           <p className="text-sm leading-6 text-slate-500">
-            Sign out to try another role. Your mock changes remain in this
-            browser between sessions.
+            {isDemoMode ? "Sign out to try another role. Demo changes remain in this browser." : "Your administrator manages your account role and department access."}
           </p>
         </section>
       </div>

@@ -11,7 +11,7 @@ beforeEach(() => {
 });
 describe("storage quota commands", () => {
   it("allows only Admin to edit quotas, including against direct service calls", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     for (const userId of ["u2", "u3", "u4"])
       await expect(
         repository.execute(userId, {
@@ -29,14 +29,14 @@ describe("storage quota commands", () => {
     expect(getDepartmentStorage(db, "design").status).toBe("Warning");
     expect(db.activities[0].action).toBe("changed storage quota");
     vi.resetModules();
-    const reloaded = await import("./repository");
+    const reloaded = await import("./mock-repository");
     expect(
       getDepartmentStorage(await reloaded.repository.getDatabase(), "design")
         .capacityBytes,
     ).toBe(8_000_000);
   });
   it("validates quotas and department existence without committing changes", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const before = await repository.getDatabase();
     for (const storageQuotaBytes of [
       0,
@@ -63,7 +63,7 @@ describe("storage quota commands", () => {
     expect(await repository.getDatabase()).toEqual(before);
   });
   it("rejects over-quota uploads atomically, permits exact fits, and frees quota on deletion", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await repository.execute("u1", {
       kind: "quota",
       departmentId: "design",
@@ -103,7 +103,7 @@ describe("storage quota commands", () => {
     ).toBe(100);
   });
   it("preserves existing files when lowering quota below current usage", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const before = await repository.getDatabase();
     await repository.execute("u1", {
       kind: "quota",

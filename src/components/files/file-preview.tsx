@@ -214,7 +214,9 @@ export function FilePreview({
             </p>
           )}
           <p className="mb-4 text-xs text-slate-500">
-            {file.dataUrl
+            {file.storagePath
+              ? "Private file. Download preserves the original uploaded bytes; reopen the preview if its link expires."
+              : file.dataUrl
               ? "Download preserves the original uploaded bytes."
               : file.previewUrl || isPdfFile(file)
                 ? "Demo asset: a small illustrative sample, not a real company file."

@@ -29,7 +29,7 @@ describe("folder migration and repository integration", () => {
       })),
     };
     storage.set("elladria-demo-v1", JSON.stringify(legacy));
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const migrated = await repository.getDatabase();
     expect(migrated.folders).toEqual(seed.folders);
     expect(migrated.files).toEqual(seed.files);
@@ -40,7 +40,7 @@ describe("folder migration and repository integration", () => {
     expect(migrateFolders(migrated)).toEqual(migrated);
   });
   it("persists folder CRUD, file moves and corresponding activity records across reload", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     await repository.execute("u3", {
       kind: "createFolder",
       departmentId: "design",
@@ -71,7 +71,7 @@ describe("folder migration and repository integration", () => {
     ).rejects.toThrow("confirmation");
     expect(await repository.getDatabase()).toEqual(before);
     vi.resetModules();
-    const reloaded = (await import("./repository")).repository;
+    const reloaded = (await import("./mock-repository")).repository;
     expect(await reloaded.getDatabase()).toEqual(before);
     expect((await reloaded.getFile("u3", "f1")).folderId).toBe(created.id);
     await reloaded.execute("u3", {
@@ -90,7 +90,7 @@ describe("folder migration and repository integration", () => {
     await expect(reloaded.getFile("u3", "f1")).rejects.toThrow("access");
   });
   it("supports root uploads, preview reads, renames and deletion while enforcing quota and access", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const before = await repository.getDatabase();
     await repository.execute("u3", {
       kind: "upload",
@@ -131,7 +131,7 @@ describe("folder migration and repository integration", () => {
     ).toBe(getDepartmentStorage(before, "design").usedBytes);
   });
   it("rejects forged department destinations and direct unauthorized commands without changes", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const before = await repository.getDatabase();
     await expect(
       repository.execute("u1", {
@@ -186,7 +186,7 @@ describe("folder migration and repository integration", () => {
     expect(await repository.getDatabase()).toEqual(before);
   });
   it("rolls back folder operations and activity when persistence fails", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const before = await repository.getDatabase();
     vi.stubGlobal("localStorage", {
       setItem: () => {

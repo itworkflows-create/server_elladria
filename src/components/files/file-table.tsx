@@ -36,7 +36,7 @@ export function FileTable({
   const filtered = files
     .filter(
       (file) =>
-        canView(user, file.departmentId, db) &&
+        !file.pendingDeletion && canView(user, file.departmentId, db) &&
         getFilePath(db, user, file)
           .toLowerCase()
           .includes(search.toLowerCase()) &&
@@ -80,6 +80,7 @@ export function FileTable({
               ["image", "Images"],
               ["audio", "Audio"],
               ["video", "Videos"],
+              ["spreadsheet", "Spreadsheets"],
               ["other", "Other"],
             ].map(([value, label]) => (
               <option key={value} value={value}>

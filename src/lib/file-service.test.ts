@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { seed } from "../data/seed";
-import { repository } from "../data/repository";
-import { fileService } from "./file-service";
+import { repository } from "../data/mock-repository";
+import { fileService } from "./mock-file-service";
 import { downloadFile } from "./file-download";
 afterEach(() => {
   vi.restoreAllMocks();

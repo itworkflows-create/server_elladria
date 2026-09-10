@@ -14,7 +14,7 @@ beforeEach(() => {
 });
 describe("mixed file permissions and accounting", () => {
   it("authorizes file reads for Admin, Executive, own department and granted shares", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     for (const user of ["u1", "u2"])
       expect((await repository.getFile(user, "media-video")).extension).toBe(
         "mp4",
@@ -31,7 +31,7 @@ describe("mixed file permissions and accounting", () => {
     await expect(repository.getFile("u3", "f5")).rejects.toThrow("access");
   });
   it("tracks audio/video uploads, metadata, rename timestamps, and deletion in storage totals", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const before = await repository.getDatabase();
     for (const name of ["Recording.mp3", "Training.mp4"])
       await repository.execute("u3", {
@@ -76,7 +76,7 @@ describe("mixed file permissions and accounting", () => {
     );
   });
   it("rejects unauthorized, unsupported and over-quota media writes without side effects", async () => {
-    const { repository } = await import("./repository");
+    const { repository } = await import("./mock-repository");
     const file = {
       folderId: "s1",
       name: "Video.mp4",
