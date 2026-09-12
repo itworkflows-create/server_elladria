@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -7,9 +7,10 @@ import { ArrowRight, Layers3, ShieldCheck } from "lucide-react";
 import { useApp } from "../context";
 import { Button } from "../components/ui/button";
 import { isDemoMode } from "../lib/supabase";
+import { ThemeToggle } from "../components/theme-toggle";
 const DemoLogin = lazy(() => import("./demo-login").then(m => ({ default: m.DemoLogin })));
 const schema = z.object({ email: z.string().trim().email("Enter a valid email address."), password: z.string().min(1, "Enter your password.") });
-export function Login() { return isDemoMode ? <Suspense fallback={<p role="status">Loading…</p>}><DemoLogin /></Suspense> : <SupabaseLogin />; }
+export function Login() { return <><div className="login-theme-toggle"><ThemeToggle /></div>{isDemoMode ? <Suspense fallback={<p role="status">Loading…</p>}><DemoLogin /></Suspense> : <SupabaseLogin />}</>; }
 function SupabaseLogin() {
   const { user, signIn, notice } = useApp();
   const [error, setError] = useState("");

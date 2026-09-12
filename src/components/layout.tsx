@@ -29,6 +29,7 @@ import { isDemoMode } from "../lib/supabase";
 import { useApp } from "../context";
 import { Avatar, Badge } from "./common";
 import { Button } from "./ui/button";
+import { ThemeToggle } from "./theme-toggle";
 export function Logo() {
   return (
     <Link to="/" className="logo">
@@ -215,6 +216,7 @@ export function Layout() {
               />
               <kbd>↵</kbd>
             </form>
+            <ThemeToggle />
             <Badge tone="green">{user.role}</Badge>
             <Link aria-label="Your settings" to="/settings">
               <Avatar initials={user.initials} small />

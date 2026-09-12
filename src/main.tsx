@@ -14,6 +14,7 @@ import { SettingsPage } from "./pages/settings";
 import { Empty } from "./components/common";
 import type { Role } from "./types";
 import "./index.css";
+import "./theme.css";
 const StoragePage = React.lazy(() =>
   import("./pages/storage").then((module) => ({ default: module.StoragePage })),
 );
